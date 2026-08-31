@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+    <title>yash — art</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../style.css">
+  </head>
+  <body>
+    <div class="wrap">
+      <nav class="topnav">
+        <a href="/">Home</a>
+        <a href="/blog">Blog</a>
+        <a href="/art">Art</a>
+        <a href="/resume.html">Resume</a>
+      </nav>
+
+      <header class="masthead">
+        <h1>Art</h1>
+        <p class="art-intro">Things made by hand, kept here so they don't get lost.</p>
+      </header>
+
+      <div class="filters" id="filters" hidden></div>
+
+      <ul class="gallery" id="gallery"></ul>
+      <p class="empty" id="empty" hidden>Nothing here yet.</p>
+    </div>
+
+    <footer>
+      <p class="colophon">Built by Yashwanth Krishna &copy; <span id="year">2026</span></p>
+    </footer>
+
+    <script>
+      document.getElementById("year").textContent = new Date().getFullYear();
+
+      var gallery = document.getElementById("gallery");
+      var filters = document.getElementById("filters");
+      var empty = document.getElementById("empty");
+      var pieces = [];
+      var active = null;
+
+      function fmtDate(iso) {
+        var parts = String(iso).split("-");
+        if (parts.length < 2) return iso;
+        var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+        var m = months[parseInt(parts[1], 10) - 1] || "";
+        return parts.length > 2 ? m + " " + parseInt(parts[2], 10) + ", " + parts[0]
+                                : m + " " + parts[0];
+      }
+
+      function render() {
+        var shown = active ? pieces.filter(function (p) {
+          return (p.labels || []).indexOf(active) !== -1;
+        }) : pieces;
+
+        gallery.textContent = "";
+        shown.forEach(function (p) {
+          var li = document.createElement("li");
+          li.className = "piece";
+
+          if (p.image) {
+            var img = document.createElement("img");
+            img.src = p.image;
+            img.alt = p.title || "";
+            img.loading = "lazy";
+            li.appendChild(img);
+          }
+
+          var h2 = document.createElement("h2");
+          h2.textContent = p.title || "Untitled";
+          li.appendChild(h2);
+
+          if (p.date) {
+            var t = document.createElement("time");
+            t.dateTime = p.date;
+            t.textContent = fmtDate(p.date);
+            li.appendChild(t);
+          }
+
+          if (p.description) {
+            var desc = document.createElement("p");
+            desc.textContent = p.description;
+            li.appendChild(desc);
+          }
+
+          if (p.labels && p.labels.length) {
+            var ul = document.createElement("ul");
+            ul.className = "labels";
+            p.labels.forEach(function (label) {
+              var item = document.createElement("li");
+              item.textContent = label;
+              ul.appendChild(item);
+            });
+            li.appendChild(ul);
+          }
+
+          gallery.appendChild(li);
+        });
+
+        empty.hidden = shown.length > 0;
+      }
+
+      function buildFilters() {
+        var all = [];
+        pieces.forEach(function (p) {
+          (p.labels || []).forEach(function (l) {
+            if (all.indexOf(l) === -1) all.push(l);
+          });
+        });
+        if (!all.length) return;
+        all.sort();
+
+        ["all"].concat(all).forEach(function (label) {
+          var b = document.createElement("button");
+          b.type = "button";
+          b.textContent = label;
+          b.setAttribute("aria-pressed", label === "all" ? "true" : "false");
+          b.addEventListener("click", function () {
+            active = label === "all" ? null : label;
+            Array.prototype.forEach.call(filters.children, function (other) {
+              other.setAttribute("aria-pressed", String(other === b));
+            });
+            render();
+          });
+          filters.appendChild(b);
+        });
+        filters.hidden = false;
+      }
+
+      fetch("art.json", { cache: "no-cache" })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          pieces = Array.isArray(data) ? data : [];
+          pieces.sort(function (a, b) {
+            return String(b.date || "").localeCompare(String(a.date || ""));
+          });
+          buildFilters();
+          render();
+        })
+        .catch(function () {
+          empty.hidden = false;
+          empty.textContent = "Could not load the gallery.";
+        });
+    </script>
+  </body>
+</html>

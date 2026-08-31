@@ -1,0 +1,66 @@
+name: Add art from issue
+
+on:
+  issues:
+    types: [labeled]
+
+# Only one run at a time, so two pieces added back to back can't
+# clobber each other's write to art.json.
+concurrency:
+  group: art-gallery
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  add:
+    # Applying a label requires write access, so this can only be
+    # triggered by you or a collaborator.
+    if: github.event.label.name == 'art'
+    runs-on: ubuntu-latest
+    steps:
+      # GitHub Pages serves the `live` branch, but issue events check out the
+      # default branch unless told otherwise. Commit where the site is built from.
+      - uses: actions/checkout@v4
+        with:
+          ref: live
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - run: pip install --quiet Pillow
+
+      - name: Build gallery entry
+        id: art
+        env:
+          GITHUB_EVENT_PATH: ${{ github.event_path }}
+        run: python .github/scripts/art_from_issue.py
+
+      - name: Commit
+        if: steps.art.outputs.status == 'added'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add art/art.json art/images
+          git commit -m "art: ${{ steps.art.outputs.title }} (#${{ github.event.issue.number }})"
+          git push origin HEAD:live
+
+      - name: Close the issue
+        if: steps.art.outputs.status == 'added'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue comment "${{ github.event.issue.number }}" \
+            --body "Added to the gallery — \`${{ steps.art.outputs.image }}\`. Live in a minute or two."
+          gh issue close "${{ github.event.issue.number }}"
+
+      - name: Report failure
+        if: steps.art.outputs.status == 'failed'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue comment "${{ github.event.issue.number }}" \
+            --body "Could not add this one: ${{ steps.art.outputs.message }}"
