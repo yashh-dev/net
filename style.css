@@ -41,6 +41,12 @@ body {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+.topnav .disabled,
+.sitemap .disabled {
+  color: var(--muted);
+  opacity: 0.4;
+  cursor: default;
+}
 
 /* ---- masthead: always full width ---- */
 .masthead { max-width: 46rem; margin-bottom: 2.75rem; }
