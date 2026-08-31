@@ -3,7 +3,6 @@
   --fg: #1a1a1a;
   --muted: #5a5a5a;
   --rule: #e4e0d8;
-  --link: #1a1a1a;
 }
 
 * { box-sizing: border-box; }
@@ -32,15 +31,7 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.11em;
 }
-.topnav a {
-  color: var(--muted);
-  text-decoration: none;
-}
-.topnav a:hover {
-  color: var(--fg);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
+.topnav a { padding: 0.2em 0.45em; }
 .topnav .disabled,
 .sitemap .disabled {
   color: var(--muted);
@@ -121,8 +112,17 @@ li ul li { margin-bottom: 0.2rem; color: var(--muted); }
 .chips li { margin: 0; color: var(--fg); }
 .chips.last { margin-bottom: 0; }
 
-a { color: var(--link); text-decoration: underline; text-underline-offset: 2px; }
-a:hover { text-decoration-thickness: 2px; }
+a {
+  color: var(--bg);
+  background: var(--fg);
+  text-decoration: none;
+  padding: 0.04em 0.3em;
+  /* keeps the block intact when a link wraps across two lines */
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+a:hover { background: var(--muted); }
+a:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
 
 footer {
   max-width: 1180px;
@@ -142,8 +142,7 @@ footer {
 .sitemap-group h2 { border-bottom: none; margin-bottom: 0.5rem; padding-bottom: 0; }
 .sitemap ul { list-style: none; margin: 0; padding: 0; }
 .sitemap li { margin-bottom: 0.3rem; }
-.sitemap a { text-decoration: none; }
-.sitemap a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.sitemap a { padding: 0.1em 0.35em; }
 .sitemap span { color: var(--muted); font-size: 0.875rem; }
 
 .colophon { margin: 0; padding-top: 1.25rem; border-top: 1px solid var(--rule); }
